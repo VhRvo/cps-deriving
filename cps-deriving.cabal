@@ -66,6 +66,8 @@ library
         -- Expr
       , FreshName
       , Plain1.Conversion
+      , Good.Conversion
+      , OnePassTailRecursive.Conversion
 
 
     -- LANGUAGE extensions used by modules in this package.
