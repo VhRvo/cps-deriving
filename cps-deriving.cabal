@@ -59,16 +59,22 @@ library
     import:           warnings
 
     -- Modules exported by the library.
-    exposed-modules:  MyLib
+    exposed-modules:  Expr
 
     -- Modules included in this library but not exported.
-    -- other-modules:
+    other-modules:
+        -- Expr
+      , FreshName
+      , Plain1.Conversion
+
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.18.3.0
+    build-depends:
+        base ^>=4.18.3.0
+      , text
 
     -- Directories containing source files.
     hs-source-dirs:   src
