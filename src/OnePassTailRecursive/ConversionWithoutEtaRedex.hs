@@ -4,7 +4,7 @@
 {-# Hlint ignore "Use lambda-case" #-}
 {-# Hlint ignore "Avoid lambda" #-}
 
-module OnePassTailRecursive.Conversion where
+module OnePassTailRecursive.ConversionWithoutEtaRedex where
 
 import Expr
 import Data.Text (Text)

@@ -67,7 +67,8 @@ library
       , FreshName
       , Plain1.Conversion
       , Good.Conversion
-      , OnePassTailRecursive.Conversion
+      , Good.DerivingBetter
+      , OnePassTailRecursive.ConversionWithoutEtaRedex
 
 
     -- LANGUAGE extensions used by modules in this package.
