@@ -6,9 +6,9 @@
 
 module OnePassTailRecursive.ConversionWithoutEtaRedex where
 
-import Expr
 import Data.Text (Text)
 import Data.Text.IO qualified as T
+import Expr
 import FreshName (genFreshName)
 
 cpsC :: Expr -> (Expr -> Expr) -> Expr
@@ -40,8 +40,10 @@ e1 = T.putStrLn $ prettyPrint $ cpsC' (ELam "f" (EApp (EVar "f") (EVar "x"))) (E
 
 -- (@topK (\f -> (\$k2 -> (@(@f x) (\$a3 -> (@(@$a3 x) $k2))))))
 e2 :: IO ()
-e2 = T.putStrLn $ prettyPrint $ cpsC' (ELam "f" (EApp (EApp (EVar "f") (EVar "x")) (EVar "x"))) (EVar "topK")
+e2 =
+  T.putStrLn $
+    prettyPrint $
+      cpsC' (ELam "f" (EApp (EApp (EVar "f") (EVar "x")) (EVar "x"))) (EVar "topK")
 
 -- >>>
 -- 1
-

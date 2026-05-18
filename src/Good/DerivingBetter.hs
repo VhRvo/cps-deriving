@@ -6,9 +6,9 @@
 
 module Good.DerivingBetter where
 
-import Expr
 import Data.Text (Text)
 import Data.Text.IO qualified as T
+import Expr
 import FreshName (genFreshName)
 
 cpsC :: Expr -> (Expr -> Expr) -> Expr
@@ -66,5 +66,3 @@ cpsC' (EApp e1 e2) k =
   cpsC e1 $ \f ->
     cpsC e2 $ \arg ->
       EApp (EApp f arg) (EVar k)
-
-
