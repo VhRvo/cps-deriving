@@ -1,0 +1,22 @@
+module Let.Expr where
+
+import Data.Text (Text)
+type Var = Text
+
+data Expr
+    = EVar Var
+    | ELam Var Expr
+    | EApp Expr Expr
+    | If Expr Expr Expr
+    | Let Var Expr Expr
+    | Letrec Var Expr Expr
+    | EConstant Int
+    | EUnary UnaryOp Expr
+    | EBinary BinaryOp Expr Expr
+    deriving (Show, Eq)
+
+data UnaryOp = Negate
+    deriving (Show, Eq)
+
+data BinaryOp = Add | Subtract | Multiply | Divide
+    deriving (Show, Eq)

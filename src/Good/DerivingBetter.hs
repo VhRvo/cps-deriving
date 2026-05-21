@@ -32,8 +32,6 @@ example1 = T.putStrLn $ prettyPrint $ cpsC (ELam "f" (EApp (EVar "f") (EVar "x")
 -- >>>
 -- 1
 
-type Var = Text
-
 cpsC' :: Expr -> Var -> Expr
 -- cpsC' expr k = cpsC expr (\e -> EApp (EVar k) e)
 cpsC' (EVar n) k =

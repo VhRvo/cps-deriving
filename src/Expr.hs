@@ -4,9 +4,11 @@ module Expr where
 
 import Data.Text (Text)
 
+type Var = Text
+
 data Expr
-  = EVar Text
-  | ELam Text Expr
+  = EVar Var
+  | ELam Var Expr
   | EApp Expr Expr
   deriving (Show, Eq)
 

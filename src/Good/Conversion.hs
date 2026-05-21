@@ -12,8 +12,6 @@ import Data.Text.IO qualified as T
 import Expr
 import FreshName (genFreshName)
 
-type Var = Text
-
 reflect :: Var -> Expr -> Expr
 reflect k m = EApp (EVar k) m
 

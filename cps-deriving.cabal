@@ -59,7 +59,9 @@ library
     import:           warnings
 
     -- Modules exported by the library.
-    exposed-modules:  Expr
+    exposed-modules:
+        Expr
+      , Good.FourEtaRedexStrategies
 
     -- Modules included in this library but not exported.
     other-modules:
@@ -70,6 +72,8 @@ library
       , Good.DerivingBetter
       , Good.DerivingBetterMoreDetails
       , OnePassTailRecursive.ConversionWithoutEtaRedex
+      , RepresentingControl.CpsConversion
+      , RepresentingControl.Psi
 
 
     -- LANGUAGE extensions used by modules in this package.
