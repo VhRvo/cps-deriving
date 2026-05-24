@@ -24,6 +24,7 @@ fix = EVar "fix"
 -- = [ fix ] (\x. x)
 -- = [ \f. f (\x. fix f x) ] (\x. x)
 -- = (\x. x) (\f k. [ f (\x. fix f x) ] k)
+-- = \f k. [ f (\x. fix f x) ] k
 
 
 fixF :: Expr
@@ -99,27 +100,47 @@ cpsC (Let x e1 e2) k =
     let x' = genFreshName x
      in Let x' value (cpsC (renameFreeOccurrences x x' e2) k)
 cpsC (Letrec f x e1 e2) k =
-  -- cpsC (EApp e1 e2) k =
-  --   cpsC e1 $ \f ->
-  --     cpsC e2 $ \arg ->
-  --       EApp (EApp f arg) (reify k)
+-- fix f = f (\x. fix f x)
+-- fix_cbv f k = f (\x k'. fix_cbv f (\g. g x k')) k
 
---   Letrec f x e1 e2 := Let f (EApp fix (ELam (ELam x e1))) e2
+-- Letrec f x e1 e2 = Let f (EApp fix (ELam f (ELam x e1))) e2
 
-  --   cpsC (EApp fix (ELam f (ELam x e1))) $ \value ->
-  --     let f' = genFreshName f
-  --      in Let f' value (cpsC (renameFreeOccurrences f f' e2) k)
+--   cpsC (EApp fix (ELam f (ELam x e1))) $ \value ->
+--     let f' = genFreshName f
+--      in Let f' value (cpsC (renameFreeOccurrences f f' e2) k)
 
---   cpsC fix $ \fixF ->
+--   cpsC fix $ \fix_cbv ->
 --     cpsC (ELam f (ELam x e1)) $ \loop ->
 --       EApp
---         (EApp fixF loop)
+--         (EApp fix_cbv loop)
 --         ( reify
 --             ( \value ->
 --                 let f' = genFreshName f
 --                  in Let f' value (cpsC (renameFreeOccurrences f f' e2) k)
 --             )
 --         )
+
+--   cpsC (ELam f (ELam x e1)) $ \loop ->
+--     EApp
+--       (EApp fix_cbv loop)
+--       ( reify
+--           ( \value ->
+--               let f' = genFreshName f
+--                in Let f' value (cpsC (renameFreeOccurrences f f' e2) k)
+--           )
+--       )
+
+  let loop = let k' = genFreshName "k" in ELam f (ELam k' (let k'' = genFreshName "k" in EApp (EVar k') (ELam x (ELam k'' (cpsC e1 (reflect (EVar k'')))))))
+   in
+    EApp
+      (EApp fix_cbv loop)
+      ( reify
+          ( \value ->
+              let f' = genFreshName f
+               in Let f' value (cpsC (renameFreeOccurrences f f' e2) k)
+          )
+      )
+
 
 --   cpsC fix $ \fixF ->
 --     let
