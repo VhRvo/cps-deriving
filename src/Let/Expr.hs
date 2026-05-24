@@ -24,6 +24,7 @@ data Expr
   | EConstant Int
   | EUnary UnaryOp Expr
   | EBinary BinaryOp Expr Expr
+  | EFix Var Var Expr
   deriving (Show, Eq)
 
 data UnaryOp = Negate

@@ -34,3 +34,6 @@ renameFreeOccurrences old new (Letrec f arg e1 e2) =
 renameFreeOccurrences _ _ (EConstant n) = EConstant n
 renameFreeOccurrences old new (EUnary op e) = EUnary op (renameFreeOccurrences old new e)
 renameFreeOccurrences old new (EBinary op e1 e2) = EBinary op (renameFreeOccurrences old new e1) (renameFreeOccurrences old new e2)
+renameFreeOccurrences old new (EFix f arg e)
+  | f == old || arg == old = EFix f arg e
+  | otherwise = EFix f arg (renameFreeOccurrences old new e)
