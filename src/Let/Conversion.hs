@@ -102,8 +102,40 @@ cpsC (Let x e1 e2) k =
 cpsC (Letrec f x e1 e2) k =
 -- fix f = f (\x. fix f x)
 -- fix_cbv f k = f (\x k'. fix_cbv f (\g. g x k')) k
-
 -- Letrec f x e1 e2 = Let f (EApp fix (ELam f (ELam x e1))) e2
+-- Letrec f x e1 e2 = EApp (ELam f e2) (EApp fix (ELam f (ELam x e1)))
+
+--   cpsC (EApp (ELam f e2) (EApp fix (ELam f (ELam x e1)))) k
+-- =>
+--   cpsC (ELam f e2) $ \fun ->
+--     cpsC (EApp fix (ELam f (ELam x e1))) $ \arg ->
+--       EApp (EApp fun arg) (reify k)
+-- =>
+--   let fun = let k' = genFreshName "k" in k (ELam f (ELam k' (cpsC e2 (reflect (EVar k')))))
+--    in
+--     cpsC (EApp fix (ELam f (ELam x e1))) $ \arg ->
+--       EApp (EApp fun arg) (reify k)
+-- =>
+--   let fun = let k' = genFreshName "k" in k (ELam f (ELam k' (cpsC e2 (reflect (EVar k')))))
+--    in
+--     cpsC fix $ \fix_cbv ->
+--       cpsC (ELam f (ELam x e1)) $ \loop ->
+--         EApp (EApp fix_cbv loop)
+--            ( reify (\arg -> EApp (EApp fun arg) (reify k)) )
+-- =>
+--   let fun = let k' = genFreshName "k" in k (ELam f (ELam k' (cpsC e2 (reflect (EVar k')))))
+--       fix_cbv = EVar "fix_cbv"
+--    in
+--     cpsC (ELam f (ELam x e1)) $ \loop ->
+--       EApp (EApp fix_cbv loop)
+--          ( reify (\arg -> EApp (EApp fun arg) (reify k)) )
+-- =>
+  let fun = let k' = genFreshName "k" in k (ELam f (ELam k' (cpsC e2 (reflect (EVar k')))))
+      fix_cbv = EVar "fix_cbv"
+      loop = let k'' = genFreshName "k" in ELam f (ELam k'' (cpsC (ELam x e1) (reflect (EVar k''))))
+   in
+    EApp (EApp fix_cbv loop)
+       ( reify (\arg -> EApp (EApp fun arg) (reify k)) )
 
 --   cpsC (EApp fix (ELam f (ELam x e1))) $ \value ->
 --     let f' = genFreshName f
@@ -130,16 +162,16 @@ cpsC (Letrec f x e1 e2) k =
 --           )
 --       )
 
-  let loop = let k' = genFreshName "k" in ELam f (ELam k' (let k'' = genFreshName "k" in EApp (EVar k') (ELam x (ELam k'' (cpsC e1 (reflect (EVar k'')))))))
-   in
-    EApp
-      (EApp fix_cbv loop)
-      ( reify
-          ( \value ->
-              let f' = genFreshName f
-               in Let f' value (cpsC (renameFreeOccurrences f f' e2) k)
-          )
-      )
+--   let loop = let k' = genFreshName "k" in ELam f (ELam k' (let k'' = genFreshName "k" in EApp (EVar k') (ELam x (ELam k'' (cpsC e1 (reflect (EVar k'')))))))
+--    in
+--     EApp
+--       (EApp fix_cbv loop)
+--       ( reify
+--           ( \value ->
+--               let f' = genFreshName f
+--                in Let f' value (cpsC (renameFreeOccurrences f f' e2) k)
+--           )
+--       )
 
 
 --   cpsC fix $ \fixF ->
@@ -156,16 +188,16 @@ cpsC (Letrec f x e1 e2) k =
 --               )
 --           )
 
-  let
-      loop = let k' = genFreshName "k" in ELam f (ELam k' (let k'' = genFreshName "k" in EApp (EVar k') (ELam x (ELam k'' (cpsC e1 (reflect (EVar k'')))))))
-   in EApp
-          (EApp fixF loop)
-          ( reify
-              ( \value ->
-                  let f' = genFreshName f
-                      in Let f' value (cpsC (renameFreeOccurrences f f' e2) k)
-              )
-          )
+--   let
+--       loop = let k' = genFreshName "k" in ELam f (ELam k' (let k'' = genFreshName "k" in EApp (EVar k') (ELam x (ELam k'' (cpsC e1 (reflect (EVar k'')))))))
+--    in EApp
+--           (EApp fixF loop)
+--           ( reify
+--               ( \value ->
+--                   let f' = genFreshName f
+--                       in Let f' value (cpsC (renameFreeOccurrences f f' e2) k)
+--               )
+--           )
 
 --   cpsC (EApp fix (ELam f (ELam x e1))) $ \value ->
 --     let f' = genFreshName f
@@ -183,3 +215,8 @@ cpsC (EBinary op e1 e2) k =
   cpsC e1 $ \value1 ->
     cpsC e2 $ \value2 ->
       k (EBinary op value1 value2)
+
+cpsC (Fix f x e) k =
+  let k' = genFreshName "k"
+   in k (Fix f x (ELam k' (cpsC e (reflect (EVar k')))))
+
