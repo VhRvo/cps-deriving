@@ -7,7 +7,28 @@ import Let.Expr
 import Let.Rename (renameFreeOccurrences)
 
 fix :: Expr
-fix = undefined
+fix = EVar "fix"
+-- bad
+-- fix f = f (fix f)
+--   [ fix ]
+-- = [\f. f (fix f) ]
+-- = \f_k k. [ f (fix f) ] k
+-- = \f_k k. [f] $ \f_k -> [ fix f ] $ \app -> f_k app k
+-- = \f_k k. [ fix f ] $ \app -> f_k app k
+-- = \f_k k. [ fix ] $ \fix_k -> [ f ] $ \f_k -> fix_k f_k (\app -> f_k app k)
+-- = \f_k k. [ f ] $ \f_k -> fix_k f_k (\app -> f_k app k)
+-- = \f_k k. fix_k f_k (\app -> f_k app k)
+-- good
+-- fix f = f (\x . fix f x)
+-- fix_k
+-- = [ fix ] (\x. x)
+-- = [ \f. f (\x. fix f x) ] (\x. x)
+-- = (\x. x) (\f k. [ f (\x. fix f x) ] k)
+
+
+fixF :: Expr
+fixF = EVar "fixF"
+
 
 cpsC :: Expr -> (Expr -> Expr) -> Expr
 cpsC (EVar x) k =
@@ -100,12 +121,23 @@ cpsC (Letrec f x e1 e2) k =
 --             )
 --         )
 
-  cpsC fix $ \fixF ->
-    let
-        -- loop = let k' = genFreshName "k" in ELam f (ELam k' (cpsC (ELam x e1) (reflect (EVar k'))))
-        -- loop = let k' = genFreshName "k" in ELam f (ELam k' (let k'' = genFreshName "k" in reflect (EVar k') (ELam x (ELam k'' (cpsC e1 (reflect (EVar k'')))))))
-        loop = let k' = genFreshName "k" in ELam f (ELam k' (let k'' = genFreshName "k" in EApp (EVar k') (ELam x (ELam k'' (cpsC e1 (reflect (EVar k'')))))))
-     in EApp
+--   cpsC fix $ \fixF ->
+--     let
+--         -- loop = let k' = genFreshName "k" in ELam f (ELam k' (cpsC (ELam x e1) (reflect (EVar k'))))
+--         -- loop = let k' = genFreshName "k" in ELam f (ELam k' (let k'' = genFreshName "k" in reflect (EVar k') (ELam x (ELam k'' (cpsC e1 (reflect (EVar k'')))))))
+--         loop = let k' = genFreshName "k" in ELam f (ELam k' (let k'' = genFreshName "k" in EApp (EVar k') (ELam x (ELam k'' (cpsC e1 (reflect (EVar k'')))))))
+--      in EApp
+--           (EApp fixF loop)
+--           ( reify
+--               ( \value ->
+--                   let f' = genFreshName f
+--                       in Let f' value (cpsC (renameFreeOccurrences f f' e2) k)
+--               )
+--           )
+
+  let
+      loop = let k' = genFreshName "k" in ELam f (ELam k' (let k'' = genFreshName "k" in EApp (EVar k') (ELam x (ELam k'' (cpsC e1 (reflect (EVar k'')))))))
+   in EApp
           (EApp fixF loop)
           ( reify
               ( \value ->
