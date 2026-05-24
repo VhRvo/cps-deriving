@@ -7,6 +7,7 @@
 {-# Hlint ignore "Redundant lambda" #-}
 {-# Hlint ignore "Redundant bracket" #-}
 {-# Hlint ignore "Use id" #-}
+{-# Hlint ignore "Move brackets to avoid $" #-}
 
 module RepresentingControl.Psi where
 
@@ -22,7 +23,6 @@ data Value
 
 data NonValue
   = NApp Expr Expr
-
 
 fromValue :: Value -> Expr
 fromValue (VVar x) = EVar x
@@ -63,6 +63,32 @@ lemma11 (VLam x e) k =
 lemma12 :: Value -> Expr -> Bool
 -- lemma12 value dK = cpsC' (fromValue value) dK == EApp dK (psi value)
 lemma12 (VVar x) dK =
-  cpsC' (fromValue (VVar x)) dK == EApp dK (psi (VVar x))
+  -- cpsC' (fromValue (VVar x)) dK == EApp dK (psi (VVar x))
+  -- cpsC' (EVar x) dK == EApp dK (psi (VVar x))
+  EApp dK (EVar x) == EApp dK (EVar x)
 lemma12 (VLam x e) dK =
-  cpsC' (fromValue (VLam x e)) dK == EApp dK (psi (VLam x e))
+  -- cpsC' (fromValue (VLam x e)) dK == EApp dK (psi (VLam x e))
+  -- cpsC' (ELam x e) dK == EApp dK (psi (VLam x e))
+  -- (let k' = genFreshName "k" in EApp dK (ELam n (ELam k' (cpsC' e (EVar k')))))
+  --   == EApp dK (psi (VLam x e))
+  -- EApp dK (let k' = genFreshName "k" in (ELam n (ELam k' (cpsC' e (EVar k')))))
+  --   == EApp dK (psi (VLam x e))
+  EApp dK (let k' = genFreshName "k" in (ELam x (ELam k' (cpsC' e (EVar k')))))
+    == EApp dK (let k' = genFreshName "k" in (ELam x (ELam k' ((cpsC' e) (EVar k')))))
+
+lemma13 :: NonValue -> (Expr -> Expr) -> Bool
+-- lemma13 nonValue k = cpsC (fromNonValue nonValue) k == cpsC' (fromNonValue nonValue) (reify k)
+lemma13 (NApp e1 e2) k =
+  -- cpsC (fromNonValue (NApp e1 e2)) k == cpsC' (fromNonValue (NApp e1 e2)) (reify k)
+  -- cpsC (EApp e1 e2) k == cpsC' (EApp e1 e2) (reify k)
+  (cpsC e1 $ \f -> cpsC e2 $ \arg -> EApp (EApp f arg) (reify k))
+    == (cpsC e1 $ \f -> cpsC e2 $ \arg -> EApp (EApp f arg) (reify k))
+
+-- another way
+lemma13' :: NonValue -> (Expr -> Expr) -> Bool
+-- lemma13' nonValue k = cpsC (fromNonValue nonValue) k == cpsC' (fromNonValue nonValue) (reify k)
+lemma13' (NApp e1 e2) k =
+  -- cpsC (fromNonValue (NApp e1 e2)) k == cpsC' (fromNonValue (NApp e1 e2)) (reify k)
+  -- cpsC (EApp e1 e2) k == cpsC' (EApp e1 e2) (reify k)
+  -- cpsC (EApp e1 e2) k == cpsC (EApp e1 e2) (reflect (reify k))
+  cpsC (EApp e1 e2) k == cpsC (EApp e1 e2) k

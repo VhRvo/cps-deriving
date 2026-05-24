@@ -74,6 +74,9 @@ library
       , OnePassTailRecursive.ConversionWithoutEtaRedex
       , RepresentingControl.CpsConversion
       , RepresentingControl.Psi
+      , Let.Expr
+      , Let.Conversion
+      , Let.Rename
 
 
     -- LANGUAGE extensions used by modules in this package.
