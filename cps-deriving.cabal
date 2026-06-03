@@ -77,6 +77,10 @@ library
       , Let.Expr
       , Let.Conversion
       , Let.Rename
+      , Shift.Expr
+      , Shift.Closure.Eval
+      , Shift.MetaFunction.Eval
+      , Shift.Machine.Eval
 
 
     -- LANGUAGE extensions used by modules in this package.
@@ -86,6 +90,7 @@ library
     build-depends:
         base ^>=4.18.3.0
       , text
+      , containers
 
     -- Directories containing source files.
     hs-source-dirs:   src

@@ -1,5 +1,13 @@
 # Thoughts
 
+## Notes & references
+
+- [Papers/Derivation-CCS-to-MCS.md](Papers/Derivation-CCS-to-MCS.md) — 从 CCS 到 MCS 的逻辑关系
+  基本引理证明,以及 defunctionalize 出的 shift/reset 抽象机
+  ([src/Shift/Machine/Eval.hs](src/Shift/Machine/Eval.hs))。
+- [Papers/References.md](Papers/References.md) — 参考文献与理论谱系(Stoy / Reynolds / Plotkin /
+  Danvy–Filinski / Bahr–Hutton),含"定理 ↔ 文献"速查表。
+
 ## Eta-redex strategies
 
 The module `Good.FourEtaRedexStrategies` puts the four alternatives from the paper next to each other:

@@ -148,28 +148,33 @@ cpsC (Letrec f x e1 e2) k =
   -- let k' = genFreshName "k"
   --  in k (EFix f x (ELam k' (cpsC e (reflect (EVar k')))))
   --
-  -- This rule follows from what EFix denotes. EFix f x e is already the
-  -- recursive function value: it ties f to the value being constructed, and
-  -- that value accepts the ordinary argument x before running e. CPS conversion
-  -- of a function value does not call the function immediately; it changes the
-  -- value's shape so that, after x, it accepts a dynamic continuation k'. The
-  -- body e is then converted under reflect (EVar k'), exactly as in the ELam
-  -- rule. The outer continuation k receives the finished recursive value.
+  -- This rule follows from the semantic role of EFix as an introduction form
+  -- for recursive functions. EFix f x e denotes the recursive value whose self
+  -- reference f names the whole value, and whose ordinary argument x is accepted
+  -- before e is run. CPS preserves that binding structure: it translates the
+  -- result of the function body, so the value bound by f changes shape from
+  --   x -> e
+  -- to
+  --   x -> k' -> cpsC e (reflect (EVar k'))
+  -- The outer continuation k only receives this finished recursive value.
   --
-  -- That is why the continuation parameter appears inside the EFix body as an
-  -- extra lambda, while the recursive binding itself is still the same knot.
-  -- We are tying f to the CPS-expanded value, not tying f to an ongoing call.
+  -- Thus k' is not the continuation that creates the recursive binding. It is
+  -- part of the interface of the recursive function value, just like x is. Each
+  -- future invocation of the recursive value supplies its own k', and the fixed
+  -- point only says that f refers back to that CPS-expanded value.
   --
-  -- EFix therefore belongs with ELam, not with EApp. ELam and EFix both build
-  -- values: ELam binds x in a function body, while EFix binds f and x in a
-  -- recursive function body. EApp is different: it is a computation that first
-  -- obtains a function, then obtains an argument, then performs a call with the
-  -- current continuation. If EFix were treated like an EApp of an ordinary fix
-  -- function, the conversion would force a call to fix during translation of
-  -- the recursive value and would have to pass reify k to that call. That makes
-  -- the recursive knot depend on the consumer continuation of the binding site,
-  -- which is the wrong level: the knot should only describe the recursive value
-  -- being bound, and each later call to that value supplies its own continuation.
+  -- EFix therefore belongs with ELam, not with EApp. ELam and EFix are both
+  -- introduction forms: they construct values and extend the binding structure
+  -- of a body. ELam introduces x; EFix introduces both the self name f and the
+  -- ordinary argument x. EApp is an elimination form: it consumes a function
+  -- value and an argument, and transfers control to the function with the
+  -- current continuation. Treating EFix as EApp would not merely be less
+  -- efficient; it would conflate forming a recursive value with invoking a
+  -- value. Semantically, that would place the continuation of the binding site
+  -- inside the fixed-point equation itself. Then f would mean "the recursive
+  -- value as observed by this particular context", instead of the context-
+  -- independent recursive value that later calls can use with their own
+  -- continuations.
   --
   -- This is the syntactic version of the observation above:
   --   Fix f = f (Fix f)
@@ -291,8 +296,8 @@ cpsC (EBinary op e1 e2) k =
     cpsC e2 $ \value2 ->
       k (EBinary op value1 value2)
 cpsC (EFix f x e) k =
-  -- EFix is a recursive value constructor, like ELam with an extra self binder.
-  -- The outer k consumes the value; the fresh k' is the dynamic continuation
-  -- accepted each time the recursive value is called.
+  -- EFix introduces a recursive value, like ELam with an extra self binder. The
+  -- outer k consumes the value; the fresh k' belongs to the value's call
+  -- interface and is supplied each time that recursive value is invoked.
   let k' = genFreshName "k"
    in k (EFix f x (ELam k' (cpsC e (reflect (EVar k')))))
